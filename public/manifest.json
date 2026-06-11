@@ -1,0 +1,22 @@
+{
+  "short_name": "Aikyam",
+  "name": "Aikyam Farmstay",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#fbf9f4",
+  "theme_color": "#2b4c3f",
+  "display": "standalone",
+  "orientation": "portrait"
+}
