@@ -1,0 +1,221 @@
+import React, { useState } from 'react';
+
+export default function AdminPanel({ 
+  currentUser, 
+  whitelist, 
+  settings, 
+  onAddToWhitelist, 
+  onRemoveFromWhitelist, 
+  onToggleAdmin, 
+  onSaveSettings 
+}) {
+  const [newEmail, setNewEmail] = useState('');
+  const [newIsAdmin, setNewIsAdmin] = useState(false);
+  const [apiKey, setApiKey] = useState(settings.resend_api_key || '');
+  const [fromEmail, setFromEmail] = useState(settings.resend_from_email || '');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  const handleAddSubmit = async (e) => {
+    e.preventDefault();
+    if (!newEmail.trim()) return;
+    try {
+      await onAddToWhitelist(newEmail, newIsAdmin);
+      setNewEmail('');
+      setNewIsAdmin(false);
+      setErrorMsg('');
+      setSuccessMsg('Successfully added email to whitelist.');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
+
+  const handleRemove = async (email) => {
+    if (window.confirm(`Are you sure you want to remove ${email} from the whitelist? This will prevent them from logging in.`)) {
+      try {
+        await onRemoveFromWhitelist(email);
+        setErrorMsg('');
+        setSuccessMsg('Successfully removed user.');
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } catch (err) {
+        setErrorMsg(err.message);
+      }
+    }
+  };
+
+  const handleToggleAdmin = async (userId, checked) => {
+    try {
+      await onToggleAdmin(userId, checked);
+      setSuccessMsg('Admin status updated.');
+      setTimeout(() => setSuccessMsg(''), 2000);
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
+
+  const handleSaveSettingsSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await onSaveSettings({
+        resend_api_key: apiKey,
+        resend_from_email: fromEmail
+      });
+      setErrorMsg('');
+      setSuccessMsg('Email settings saved successfully.');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
+
+  return (
+    <div className="admin-layout">
+      {errorMsg && (
+        <div style={{ padding: '12px', backgroundColor: '#fdebeb', color: 'var(--danger-color)', borderRadius: '8px', fontWeight: 500, fontSize: '0.9rem' }}>
+          {errorMsg}
+        </div>
+      )}
+      {successMsg && (
+        <div style={{ padding: '12px', backgroundColor: 'var(--primary-subtle)', color: 'var(--primary-color)', borderRadius: '8px', fontWeight: 500, fontSize: '0.9rem' }}>
+          {successMsg}
+        </div>
+      )}
+
+      <div className="section-card">
+        <div className="section-title">Whitelist Onboarding Dashboard</div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>
+          Only friends added to this list can sign up and log in. You can also grant them Admin status to invite others.
+        </p>
+
+        {/* Inline Add User Form */}
+        <form onSubmit={handleAddSubmit} className="whitelist-inline-form">
+          <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+            <label className="form-label" htmlFor="new-member-email">Add Friend's Email</label>
+            <input 
+              id="new-member-email"
+              type="email" 
+              className="form-input" 
+              placeholder="e.g. friend@example.com"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              required
+            />
+          </div>
+          
+          <div className="form-group" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 0' }}>
+            <input 
+              id="new-member-admin"
+              type="checkbox" 
+              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              checked={newIsAdmin}
+              onChange={(e) => setNewIsAdmin(e.target.checked)}
+            />
+            <label className="form-label" htmlFor="new-member-admin" style={{ marginBottom: 0, cursor: 'pointer' }}>Make Admin</label>
+          </div>
+
+          <button type="submit" className="btn btn-primary" style={{ height: '45px' }}>
+            Invite
+          </button>
+        </form>
+
+        {/* Whitelist status table */}
+        <div className="whitelist-table-wrapper">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Admin role</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {whitelist.map((user) => {
+                const simulatedUserId = `u-${(user.name || '').toLowerCase()}`;
+                const isSelf = user.email.toLowerCase() === currentUser?.email.toLowerCase();
+
+                return (
+                  <tr key={user.email}>
+                    <td style={{ fontWeight: 500 }}>{user.email}</td>
+                    <td>{user.name || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Pending signup</span>}</td>
+                    <td>
+                      <span className={`status-badge ${user.registered ? 'registered' : 'pending'}`}>
+                        {user.registered ? 'Registered' : 'Invited'}
+                      </span>
+                    </td>
+                    <td>
+                      <label className="switch">
+                        <input 
+                          type="checkbox" 
+                          checked={user.isAdmin} 
+                          disabled={isSelf || !user.registered} // Can't toggle self, or someone not registered yet
+                          onChange={(e) => handleToggleAdmin(simulatedUserId, e.target.checked)}
+                        />
+                        <span className="slider"></span>
+                      </label>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button 
+                        className="icon-btn delete" 
+                        disabled={isSelf && whitelist.filter(u => u.isAdmin && u.registered).length === 1} // Can't delete self if last admin
+                        onClick={() => handleRemove(user.email)}
+                        title="Remove User"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="section-card">
+        <div className="section-title">Resend Email Configuration</div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>
+          Connect your Resend account to send automated email alerts to friends when slots open up or special requests are sent.
+        </p>
+
+        <form onSubmit={handleSaveSettingsSubmit}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="resend-api-key">Resend API Key</label>
+            <input 
+              id="resend-api-key"
+              type="password" 
+              className="form-input" 
+              placeholder="re_xxxxxxxxxxxxxx"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+            />
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+              Your secret API Key from the Resend Dashboard. Leave blank to disable emails.
+            </span>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="resend-from-email">Send Emails From</label>
+            <input 
+              id="resend-from-email"
+              type="text" 
+              className="form-input" 
+              placeholder="e.g. Aikyam Farmstay <noreply@aikyamfarmstay.com>"
+              value={fromEmail}
+              onChange={(e) => setFromEmail(e.target.value)}
+            />
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+              Must be a domain verified on your Resend account.
+            </span>
+          </div>
+
+          <button type="submit" className="btn btn-primary">
+            Save Email Settings
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
