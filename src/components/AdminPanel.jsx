@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { dbService } from '../utils/dbService';
 
 export default function AdminPanel({ 
   currentUser, 
@@ -50,6 +51,71 @@ export default function AdminPanel({
     }
   };
 
+  const handleDownloadExcel = async () => {
+    try {
+      setErrorMsg('');
+      setSuccessMsg('Preparing report...');
+      
+      const bookingsData = await dbService.exportBookingsToCSV();
+      
+      if (!bookingsData || bookingsData.length === 0) {
+        setErrorMsg('No bookings found to export.');
+        setSuccessMsg('');
+        return;
+      }
+      
+      // Header row
+      const headers = ['Booking ID', 'Guest Name', 'Guest Email', 'Check-in Date', 'Check-out Date', 'Nights', 'Created At'];
+      
+      // Data rows
+      const rows = bookingsData.map(b => {
+        const checkIn = new Date(b.check_in);
+        const checkOut = new Date(b.check_out);
+        const diffTime = Math.abs(checkOut - checkIn);
+        const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        const email = b.profiles?.email || 'N/A';
+        const createdAtStr = new Date(b.created_at).toLocaleString();
+        
+        return [
+          b.id,
+          b.user_name,
+          email,
+          b.check_in,
+          b.check_out,
+          nights,
+          createdAtStr
+        ];
+      });
+      
+      // Build CSV content
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(val => {
+          const valStr = String(val).replace(/"/g, '""');
+          return `"${valStr}"`;
+        }).join(','))
+      ].join('\n');
+      
+      // Trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `aikyam_farmstay_bookings_${new Date().getFullYear()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setSuccessMsg('Booking report downloaded successfully.');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err) {
+      setErrorMsg(err.message);
+      setSuccessMsg('');
+    }
+  };
+
   return (
     <div className="admin-layout">
       {errorMsg && (
@@ -64,7 +130,16 @@ export default function AdminPanel({
       )}
 
       <div className="section-card">
-        <div className="section-title">Whitelist Onboarding Dashboard</div>
+        <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <span>Whitelist Onboarding Dashboard</span>
+          <button 
+            onClick={handleDownloadExcel} 
+            className="btn btn-secondary" 
+            style={{ padding: '8px 16px', fontSize: '0.85rem', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            📊 Export Bookings
+          </button>
+        </div>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>
           Only friends added to this list can sign up and log in. You can also grant them Admin status to invite others.
         </p>
@@ -119,14 +194,14 @@ export default function AdminPanel({
 
                 return (
                   <tr key={user.email}>
-                    <td style={{ fontWeight: 500 }}>{user.email}</td>
-                    <td>{user.name || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Pending signup</span>}</td>
-                    <td>
+                    <td data-label="Email" style={{ fontWeight: 500 }}>{user.email}</td>
+                    <td data-label="Name">{user.name || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Pending signup</span>}</td>
+                    <td data-label="Status">
                       <span className={`status-badge ${user.registered ? 'registered' : 'pending'}`}>
                         {user.registered ? 'Registered' : 'Invited'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Admin role">
                       <label className="switch">
                         <input 
                           type="checkbox" 
@@ -137,7 +212,7 @@ export default function AdminPanel({
                         <span className="slider"></span>
                       </label>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td data-label="Actions" style={{ textAlign: 'right' }}>
                       <button 
                         className="icon-btn delete" 
                         disabled={isSelf && whitelist.filter(u => u.isAdmin && u.registered).length === 1} // Can't delete self if last admin

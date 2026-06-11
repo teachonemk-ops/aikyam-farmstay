@@ -107,6 +107,16 @@ export const dbService = {
     return data || [];
   },
 
+  exportBookingsToCSV: async () => {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('*, profiles(email)')
+      .order('check_in', { ascending: true });
+      
+    if (error) throw new Error(error.message);
+    return data || [];
+  },
+
   createBooking: async (checkIn, checkOut, overrideUserId = null) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');

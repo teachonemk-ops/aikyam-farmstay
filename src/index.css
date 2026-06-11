@@ -1269,3 +1269,76 @@ input:checked + .slider:before {
 .password-toggle-btn:hover {
   color: var(--text-primary);
 }
+
+/* Responsive Admin Table to Card Transformation on Mobile */
+@media (max-width: 768px) {
+  .whitelist-table-wrapper {
+    overflow-x: visible;
+  }
+  .admin-table, 
+  .admin-table thead, 
+  .admin-table tbody, 
+  .admin-table tr, 
+  .admin-table td {
+    display: block;
+    width: 100%;
+  }
+  .admin-table thead {
+    display: none;
+  }
+  .admin-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .admin-table tr {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+  }
+  .admin-table td {
+    border-bottom: none;
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+  .admin-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  /* Email td (first child) styled as card header */
+  .admin-table td:first-child {
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 4px;
+    display: block;
+    text-align: left;
+    color: var(--primary-color);
+  }
+  .admin-table td:first-child::before {
+    display: none;
+  }
+  
+  /* Absolute position for the delete button/actions td */
+  .admin-table td:last-child {
+    position: absolute;
+    top: 6px;
+    right: 12px;
+    width: auto;
+    padding: 0;
+  }
+  .admin-table td:last-child::before {
+    display: none;
+  }
+}
+
