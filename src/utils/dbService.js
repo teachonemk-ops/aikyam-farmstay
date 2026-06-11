@@ -344,70 +344,77 @@ export const dbService = {
       .eq('id', session.user.id)
       .single();
 
-    // 2. Update status
-    const { error: updateError } = await supabase
-      .from('requests')
-      .update({ status: status })
-      .eq('id', requestId);
-
-    if (updateError) throw new Error(updateError.message);
-
     if (status === 'accepted') {
-      // 3. Delete original booking (this will cascade update requests of this booking to cancelled/declined)
-      const { error: deleteBookingError } = await supabase
-        .from('bookings')
-        .delete()
-        .eq('id', request.booking_id);
-
-      if (deleteBookingError) throw new Error(deleteBookingError.message);
-
-      // 4. Create new booking for the requester
-      const { error: newBookingError } = await supabase
-        .from('bookings')
-        .insert({
-          user_id: request.requester_id,
-          user_name: request.requester_name,
-          check_in: request.check_in,
-          check_out: request.check_out
-        });
-
-      if (newBookingError) throw new Error(newBookingError.message);
-
-      // 5. Notify requester
-      await supabase.from('notifications').insert({
-        user_id: request.requester_id,
-        type: 'request_accepted',
-        title: 'Request Accepted!',
-        message: `${responderProfile?.name || 'Friend'} accepted your request. The booking has been transferred to you.`,
-        is_read: false
-      });
-
-      // 6. Update all other requests on the same original booking to 'declined' and notify
+      // 2. Fetch other pending requests for the same booking to notify them BEFORE deleting the booking
       const { data: otherRequests } = await supabase
         .from('requests')
         .select('*')
         .eq('booking_id', request.booking_id)
         .neq('id', requestId);
 
-      if (otherRequests && otherRequests.length > 0) {
-        // Decline them
-        await supabase
-          .from('requests')
-          .update({ status: 'declined' })
-          .eq('booking_id', request.booking_id)
-          .neq('id', requestId);
+      // 3. Prepare and insert notifications
+      const notificationsToInsert = [];
+      const now = new Date();
+      const fourHoursLater = new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString();
 
-        const otherNotifications = otherRequests.map(r => ({
-          user_id: r.requester_id,
-          type: 'request_declined',
-          title: 'Request Declined',
-          message: `The booking for ${request.check_in} to ${request.check_out} was transferred to another user.`,
-          is_read: false
-        }));
+      // Immediate notification for the requester
+      notificationsToInsert.push({
+        user_id: request.requester_id,
+        type: 'request_accepted',
+        title: 'Request Accepted!',
+        message: `${responderProfile?.name || 'Friend'} accepted your request. The booking has been cancelled and these dates are now free to book!`,
+        is_read: false,
+        created_at: now.toISOString()
+      });
 
-        await supabase.from('notifications').insert(otherNotifications);
+      // Delayed slot-opened notifications for everyone else
+      const { data: allProfiles } = await supabase.from('profiles').select('id');
+      if (allProfiles) {
+        allProfiles.forEach(p => {
+          // Exclude owner and the accepted requester
+          if (p.id !== session.user.id && p.id !== request.requester_id) {
+            const hadRequest = otherRequests?.some(r => r.requester_id === p.id);
+            if (hadRequest) {
+              notificationsToInsert.push({
+                user_id: p.id,
+                type: 'request_declined',
+                title: 'Request Declined',
+                message: `The booking for ${request.check_in} to ${request.check_out} was cancelled by the owner.`,
+                is_read: false,
+                created_at: fourHoursLater
+              });
+            } else {
+              notificationsToInsert.push({
+                user_id: p.id,
+                type: 'slot_opened',
+                title: 'Aikyam Farmstay Available!',
+                message: `The dates ${request.check_in} to ${request.check_out} have just been freed up by ${responderProfile?.name || 'Friend'}.`,
+                is_read: false,
+                created_at: fourHoursLater
+              });
+            }
+          }
+        });
       }
-    } else if (status === 'declined') {
+
+      await supabase.from('notifications').insert(notificationsToInsert);
+
+      // 4. Delete the original booking (this will automatically cascade-delete all request rows)
+      const { error: deleteBookingError } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('id', request.booking_id);
+
+      if (deleteBookingError) throw new Error(deleteBookingError.message);
+    } else if (status === 'accepted') {
+      // Update status to declined
+      const { error: updateError } = await supabase
+        .from('requests')
+        .update({ status: 'declined' })
+        .eq('id', requestId);
+
+      if (updateError) throw new Error(updateError.message);
+
       // Notify requester
       await supabase.from('notifications').insert({
         user_id: request.requester_id,

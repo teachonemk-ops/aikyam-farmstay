@@ -66,7 +66,8 @@ export default function App() {
     setSuggestions(s);
     setWhitelist(w);
     setSettings(setts);
-    setNotifications(notifs);
+    const visibleNotifs = (notifs || []).filter(n => new Date(n.created_at) <= new Date());
+    setNotifications(visibleNotifs);
   };
 
   const handleToggleTheme = () => {
@@ -186,7 +187,8 @@ export default function App() {
   const handleMarkNotificationsRead = async () => {
     await dbService.markNotificationsRead();
     const notifs = await dbService.getNotifications();
-    setNotifications(notifs);
+    const visibleNotifs = (notifs || []).filter(n => new Date(n.created_at) <= new Date());
+    setNotifications(visibleNotifs);
   };
 
   if (loading) {

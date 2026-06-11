@@ -531,7 +531,7 @@ export default function BookingCalendar({
                   </div>
 
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                    Note: This request will only be visible to {targetBookingForRequest.user_name}. If they accept, their booking will cancel and transfer to you automatically.
+                    Note: This request will only be visible to {targetBookingForRequest.user_name}. If they accept, their booking will be cancelled, freeing up the dates for you to book.
                   </div>
 
                   <div className="form-actions">
