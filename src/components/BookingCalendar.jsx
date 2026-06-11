@@ -27,6 +27,7 @@ export default function BookingCalendar({
   const [targetBookingForRequest, setTargetBookingForRequest] = useState(null);
   const [reason, setReason] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [requestSuccess, setRequestSuccess] = useState(false);
 
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -41,6 +42,7 @@ export default function BookingCalendar({
     setSelectionEnd(null);
     setHoveredDate(null);
     setErrorMsg('');
+    setRequestSuccess(false);
   };
 
   // Navigate months (limit within 90 days)
@@ -234,11 +236,17 @@ export default function BookingCalendar({
     }
     try {
       await onCreateRequest(targetBookingForRequest.id, selectionStart, selectionEnd, reason);
-      setShowRequestModal(false);
-      resetSelection();
+      setRequestSuccess(true);
+      setErrorMsg('');
     } catch (err) {
       setErrorMsg(err.message);
     }
+  };
+
+  const handleWhatsAppRequestShare = () => {
+    const msg = `Hey ${targetBookingForRequest.user_name}, I just requested your stays on the Aikyam portal for ${formatDisplayDate(selectionStart)} to ${formatDisplayDate(selectionEnd)}. Reason: "${reason}". Please check!`;
+    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
   };
 
   // Generate calendar days
@@ -460,45 +468,91 @@ export default function BookingCalendar({
         <div className="modal-overlay">
           <div className="modal-content">
             <button className="modal-close-btn" onClick={() => { setShowRequestModal(false); resetSelection(); }}>×</button>
-            <h3 className="modal-title">Request Special Occasion</h3>
-            <p className="modal-subtitle" style={{ color: 'var(--accent-color)' }}>
-              These dates are blocked by <strong>{targetBookingForRequest.user_name}</strong>.
-            </p>
             
-            <form onSubmit={handleRequestSubmit}>
-              <div className="form-group">
-                <span className="form-label">Requested Range</span>
-                <p style={{ fontWeight: 600, fontSize: '1rem' }}>
-                  {formatDisplayDate(targetBookingForRequest.check_in)} to {formatDisplayDate(targetBookingForRequest.check_out)}
+            {requestSuccess ? (
+              <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                <span style={{ fontSize: '3.0rem' }}>✉️</span>
+                <h3 className="modal-title" style={{ marginTop: '16px' }}>Request Submitted!</h3>
+                <p className="modal-subtitle" style={{ marginBottom: '24px' }}>
+                  Your request has been logged in the portal.
                 </p>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="reason-input">Reason for Special Occasion *</label>
-                <textarea
-                  id="reason-input"
-                  className="form-input"
-                  style={{ minHeight: '100px', resize: 'vertical' }}
-                  placeholder="Explain why you need these dates (e.g. My daughter's birthday dinner, family reunion...)"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                Note: This request will only be visible to {targetBookingForRequest.user_name}. If they accept, their booking will cancel and transfer to you automatically.
-              </div>
-
-              <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => { setShowRequestModal(false); resetSelection(); }}>
-                  Cancel
+                
+                <div style={{ 
+                  backgroundColor: 'var(--primary-subtle)', 
+                  padding: '16px', 
+                  borderRadius: '12px', 
+                  fontSize: '0.9rem', 
+                  color: 'var(--primary-color)',
+                  fontWeight: 500,
+                  marginBottom: '28px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  alignItems: 'center'
+                }}>
+                  <span>Let {targetBookingForRequest.user_name} know on WhatsApp:</span>
+                  <button 
+                    type="button" 
+                    className="btn btn-primary"
+                    onClick={handleWhatsAppRequestShare}
+                    style={{ backgroundColor: '#25D366', color: 'white', border: 'none', width: '100%', marginTop: '6px' }}
+                  >
+                    💬 Notify on WhatsApp
+                  </button>
+                </div>
+                
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  style={{ width: '100%' }}
+                  onClick={() => { setShowRequestModal(false); resetSelection(); }}
+                >
+                  Done
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--accent-color)' }}>
-                  Submit Request
-                </button>
               </div>
-            </form>
+            ) : (
+              <>
+                <h3 className="modal-title">Request Special Occasion</h3>
+                <p className="modal-subtitle" style={{ color: 'var(--accent-color)' }}>
+                  These dates are blocked by <strong>{targetBookingForRequest.user_name}</strong>.
+                </p>
+                
+                <form onSubmit={handleRequestSubmit}>
+                  <div className="form-group">
+                    <span className="form-label">Requested Range</span>
+                    <p style={{ fontWeight: 600, fontSize: '1rem' }}>
+                      {formatDisplayDate(targetBookingForRequest.check_in)} to {formatDisplayDate(targetBookingForRequest.check_out)}
+                    </p>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="reason-input">Reason for Special Occasion *</label>
+                    <textarea
+                      id="reason-input"
+                      className="form-input"
+                      style={{ minHeight: '100px', resize: 'vertical' }}
+                      placeholder="Explain why you need these dates (e.g. My daughter's birthday dinner, family reunion...)"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                    Note: This request will only be visible to {targetBookingForRequest.user_name}. If they accept, their booking will cancel and transfer to you automatically.
+                  </div>
+
+                  <div className="form-actions">
+                    <button type="button" className="btn btn-secondary" onClick={() => { setShowRequestModal(false); resetSelection(); }}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--accent-color)' }}>
+                      Submit Request
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}

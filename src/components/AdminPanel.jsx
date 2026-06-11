@@ -3,16 +3,12 @@ import React, { useState } from 'react';
 export default function AdminPanel({ 
   currentUser, 
   whitelist, 
-  settings, 
   onAddToWhitelist, 
   onRemoveFromWhitelist, 
-  onToggleAdmin, 
-  onSaveSettings 
+  onToggleAdmin
 }) {
   const [newEmail, setNewEmail] = useState('');
   const [newIsAdmin, setNewIsAdmin] = useState(false);
-  const [apiKey, setApiKey] = useState(settings.resend_api_key || '');
-  const [fromEmail, setFromEmail] = useState(settings.resend_from_email || '');
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -49,21 +45,6 @@ export default function AdminPanel({
       await onToggleAdmin(userId, checked);
       setSuccessMsg('Admin status updated.');
       setTimeout(() => setSuccessMsg(''), 2000);
-    } catch (err) {
-      setErrorMsg(err.message);
-    }
-  };
-
-  const handleSaveSettingsSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await onSaveSettings({
-        resend_api_key: apiKey,
-        resend_from_email: fromEmail
-      });
-      setErrorMsg('');
-      setSuccessMsg('Email settings saved successfully.');
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       setErrorMsg(err.message);
     }
@@ -172,49 +153,6 @@ export default function AdminPanel({
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div className="section-card">
-        <div className="section-title">Resend Email Configuration</div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>
-          Connect your Resend account to send automated email alerts to friends when slots open up or special requests are sent.
-        </p>
-
-        <form onSubmit={handleSaveSettingsSubmit}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="resend-api-key">Resend API Key</label>
-            <input 
-              id="resend-api-key"
-              type="password" 
-              className="form-input" 
-              placeholder="re_xxxxxxxxxxxxxx"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-            />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
-              Your secret API Key from the Resend Dashboard. Leave blank to disable emails.
-            </span>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="resend-from-email">Send Emails From</label>
-            <input 
-              id="resend-from-email"
-              type="text" 
-              className="form-input" 
-              placeholder="e.g. Aikyam Farmstay <noreply@aikyamfarmstay.com>"
-              value={fromEmail}
-              onChange={(e) => setFromEmail(e.target.value)}
-            />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
-              Must be a domain verified on your Resend account.
-            </span>
-          </div>
-
-          <button type="submit" className="btn btn-primary">
-            Save Email Settings
-          </button>
-        </form>
       </div>
     </div>
   );

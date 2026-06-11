@@ -11,6 +11,7 @@ export default function Dashboard({
   const [newCheckIn, setNewCheckIn] = useState('');
   const [newCheckOut, setNewCheckOut] = useState('');
   const [editError, setEditError] = useState('');
+  const [cancelledBookingInfo, setCancelledBookingInfo] = useState(null);
 
   // Get upcoming bookings in chronological order
   const todayStr = getTodayDateString();
@@ -21,6 +22,7 @@ export default function Dashboard({
   const handleCancelClick = async (id, checkIn, checkOut) => {
     if (window.confirm(`Are you sure you want to cancel your booking for ${formatDisplayDate(checkIn)} to ${formatDisplayDate(checkOut)}?`)) {
       await onCancelBooking(id);
+      setCancelledBookingInfo({ checkIn, checkOut });
     }
   };
 
@@ -56,6 +58,47 @@ export default function Dashboard({
       <div className="section-title">
         <span>Upcoming Stays</span>
       </div>
+
+      {cancelledBookingInfo && (
+        <div style={{
+          padding: '16px',
+          backgroundColor: 'var(--accent-subtle)',
+          border: '1px solid var(--accent-color)',
+          borderRadius: '12px',
+          marginBottom: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          alignItems: 'center'
+        }}>
+          <span style={{ fontWeight: 600, color: 'var(--accent-color)', fontSize: '0.95rem' }}>
+            🏡 Stay Cancelled ({formatDisplayDate(cancelledBookingInfo.checkIn)} - {formatDisplayDate(cancelledBookingInfo.checkOut)})
+          </span>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+            Share this opening with your friends on WhatsApp:
+          </span>
+          <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+            <button
+              className="btn btn-primary"
+              style={{ backgroundColor: '#25D366', color: 'white', border: 'none', flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
+              onClick={() => {
+                const msg = `Hey everyone! I just cancelled my stay for ${formatDisplayDate(cancelledBookingInfo.checkIn)} to ${formatDisplayDate(cancelledBookingInfo.checkOut)} at Aikyam Farmstay. The dates are now free to book on the portal!`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                setCancelledBookingInfo(null);
+              }}
+            >
+              💬 Share on WhatsApp
+            </button>
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '8px 12px', fontSize: '0.85rem' }}
+              onClick={() => setCancelledBookingInfo(null)}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="bookings-list">
         {upcomingBookings.length === 0 ? (

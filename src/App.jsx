@@ -20,6 +20,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar', 'suggestions', 'admin'
   const [theme, setTheme] = useState('light');
   const [authView, setAuthView] = useState('login'); // 'login', 'signup'
+  const [showPassword, setShowPassword] = useState(false);
   
   // Auth Form inputs
   const [authEmail, setAuthEmail] = useState('');
@@ -235,15 +236,25 @@ export default function App() {
 
               <div className="form-group">
                 <label className="form-label" htmlFor="login-password">Password</label>
-                <input 
-                  id="login-password"
-                  type="password" 
-                  className="form-input" 
-                  placeholder="••••••••"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  required 
-                />
+                <div className="password-input-wrapper">
+                  <input 
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'} 
+                    className="form-input" 
+                    placeholder="••••••••"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    required 
+                  />
+                  <button 
+                    type="button" 
+                    className="password-toggle-btn" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }}>
@@ -290,15 +301,25 @@ export default function App() {
 
               <div className="form-group">
                 <label className="form-label" htmlFor="signup-password">Choose Password</label>
-                <input 
-                  id="signup-password"
-                  type="password" 
-                  className="form-input" 
-                  placeholder="••••••••"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  required 
-                />
+                <div className="password-input-wrapper">
+                  <input 
+                    id="signup-password"
+                    type={showPassword ? 'text' : 'password'} 
+                    className="form-input" 
+                    placeholder="••••••••"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    required 
+                  />
+                  <button 
+                    type="button" 
+                    className="password-toggle-btn" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }}>
