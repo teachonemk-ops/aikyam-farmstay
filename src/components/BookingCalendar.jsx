@@ -358,15 +358,7 @@ export default function BookingCalendar({
               
               {/* Inside day label */}
               {dateInfo.isBlocked && cell.isCurrentMonth && (
-                <span style={{ 
-                  fontSize: '0.65rem', 
-                  fontWeight: 700, 
-                  textAlign: 'right',
-                  opacity: 0.9,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
+                <span className="day-occupant-name">
                   {dateInfo.hasMyRequest ? 'Requested' : dateInfo.booking.user_name}
                 </span>
               )}

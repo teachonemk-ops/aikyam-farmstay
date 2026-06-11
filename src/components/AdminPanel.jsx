@@ -207,7 +207,7 @@ export default function AdminPanel({
                           type="checkbox" 
                           checked={user.isAdmin} 
                           disabled={isSelf || !user.registered} // Can't toggle self, or someone not registered yet
-                          onChange={(e) => handleToggleAdmin(simulatedUserId, e.target.checked)}
+                          onChange={(e) => handleToggleAdmin(user.email, e.target.checked)}
                         />
                         <span className="slider"></span>
                       </label>

@@ -370,6 +370,7 @@ button, input, textarea, select {
   justify-content: center;
   transition: var(--transition);
   color: var(--text-primary);
+  touch-action: manipulation;
 }
 
 .nav-arrow-btn:hover {
@@ -1339,6 +1340,46 @@ input:checked + .slider:before {
   }
   .admin-table td:last-child::before {
     display: none;
+  }
+}
+
+/* Fix Notification Dropdown and Calendar Layout on Mobile */
+@media (max-width: 480px) {
+  .notifications-dropdown {
+    position: fixed;
+    top: 60px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-height: 70vh;
+    z-index: 1000;
+  }
+}
+
+.calendar-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+}
+
+.calendar-day-cell {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.day-occupant-name {
+  display: none;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-align: right;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .day-occupant-name {
+    display: block;
   }
 }
 

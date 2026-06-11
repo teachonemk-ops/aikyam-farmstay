@@ -603,28 +603,22 @@ export const dbService = {
     return true;
   },
 
-  toggleAdmin: async (userId, isAdmin) => {
-    // Update profile in profiles table
-    const { error: profileError } = await supabase
+  toggleAdmin: async (email, isAdmin) => {
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Update whitelist table
+    const { error: whitelistError } = await supabase
+      .from('whitelist')
+      .update({ is_admin: isAdmin })
+      .eq('email', cleanEmail);
+
+    if (whitelistError) throw new Error(whitelistError.message);
+
+    // 2. Update profiles table (succeeds if user is already registered)
+    await supabase
       .from('profiles')
       .update({ is_admin: isAdmin })
-      .eq('id', userId);
-
-    if (profileError) throw new Error(profileError.message);
-
-    // Get profile email to update whitelist too
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('id', userId)
-      .single();
-
-    if (profile) {
-      await supabase
-        .from('whitelist')
-        .update({ is_admin: isAdmin })
-        .eq('email', profile.email);
-    }
+      .eq('email', cleanEmail);
 
     return true;
   },

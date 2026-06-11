@@ -173,8 +173,8 @@ export default function App() {
     await refreshAllData();
   };
 
-  const handleToggleAdmin = async (userId, isAdmin) => {
-    await dbService.toggleAdmin(userId, isAdmin);
+  const handleToggleAdmin = async (email, isAdmin) => {
+    await dbService.toggleAdmin(email, isAdmin);
     await refreshAllData();
   };
 
