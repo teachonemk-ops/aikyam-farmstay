@@ -382,20 +382,23 @@ export default function App() {
           className={`tab-btn ${activeTab === 'calendar' ? 'active' : ''}`}
           onClick={() => setActiveTab('calendar')}
         >
-          📅 Calendar & Stays
+          <span className="tab-btn-icon">📅</span>
+          <span>Stay</span>
         </button>
         <button 
           className={`tab-btn ${activeTab === 'suggestions' ? 'active' : ''}`}
           onClick={() => setActiveTab('suggestions')}
         >
-          💡 Suggestions board
+          <span className="tab-btn-icon">💡</span>
+          <span>Board</span>
         </button>
         {currentUser.isAdmin && (
           <button 
             className={`tab-btn ${activeTab === 'admin' ? 'active' : ''}`}
             onClick={() => setActiveTab('admin')}
           >
-            ⚙️ Admin Panel
+            <span className="tab-btn-icon">⚙️</span>
+            <span>Admin</span>
           </button>
         )}
       </nav>
